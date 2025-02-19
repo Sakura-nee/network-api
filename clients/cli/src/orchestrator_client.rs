@@ -4,6 +4,7 @@ use crate::nexus_orchestrator::{
 };
 use prost::Message;
 use reqwest::Client;
+use std::time::Duration;
 
 pub struct OrchestratorClient {
     client: Client,
@@ -12,15 +13,11 @@ pub struct OrchestratorClient {
 }
 
 impl OrchestratorClient {
-    pub fn new(environment: config::Environment, timeout_secs: u64) -> Self {
-        let client = Client::builder()
-            .timeout(Duration::from_secs(timeout_secs)) // Set timeout
-            .build()
-            .expect("Failed to create reqwest client");
-
+    pub fn new(environment: config::Environment) -> Self {
         Self {
-            client,
+            client: Client::new(),
             base_url: environment.orchestrator_url(),
+            // environment,
         }
     }
 
@@ -43,12 +40,12 @@ impl OrchestratorClient {
                     .post(&url)
                     .header("Content-Type", "application/octet-stream")
                     .body(request_bytes)
-                    .timeout(Duration::from_secs(15)) // Set per-request timeout
+                    .timeout(Duration::from_secs(30)) // Set per-request timeout
                     .send()
                     .await?
             }
             "GET" => self.client.get(&url)
-                .timeout(Duration::from_secs(15)) // Set per-request timeout
+                .timeout(Duration::from_secs(30)) // Set per-request timeout
                 .send().await?,
             _ => return Err("Unsupported method".into()),
         };
