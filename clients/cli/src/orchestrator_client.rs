@@ -12,11 +12,15 @@ pub struct OrchestratorClient {
 }
 
 impl OrchestratorClient {
-    pub fn new(environment: config::Environment) -> Self {
+    pub fn new(environment: config::Environment, timeout_secs: u64) -> Self {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(timeout_secs)) // Set timeout
+            .build()
+            .expect("Failed to create reqwest client");
+
         Self {
-            client: Client::new(),
+            client,
             base_url: environment.orchestrator_url(),
-            // environment,
         }
     }
 
@@ -39,10 +43,13 @@ impl OrchestratorClient {
                     .post(&url)
                     .header("Content-Type", "application/octet-stream")
                     .body(request_bytes)
+                    .timeout(Duration::from_secs(15)) // Set per-request timeout
                     .send()
                     .await?
             }
-            "GET" => self.client.get(&url).send().await?,
+            "GET" => self.client.get(&url)
+                .timeout(Duration::from_secs(15)) // Set per-request timeout
+                .send().await?,
             _ => return Err("Unsupported method".into()),
         };
 
