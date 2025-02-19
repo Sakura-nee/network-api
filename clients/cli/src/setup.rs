@@ -83,27 +83,16 @@ pub async fn run_initial_setup() -> SetupResult {
             "\nThis node is already connected to an account using node id: {}",
             node_id
         );
-
-        //ask the user if they want to use the existing config
-        println!("Do you want to use the existing user account? (y/n)");
-        let mut use_existing_config = String::new();
-        std::io::stdin()
-            .read_line(&mut use_existing_config)
-            .unwrap();
-        let use_existing_config = use_existing_config.trim();
-        if use_existing_config == "y" {
-            match fs::read_to_string(&node_id_path) {
-                Ok(content) => {
-                    println!("\nUsing existing node ID: {}", content.trim());
-                    return SetupResult::Connected(content.trim().to_string());
-                }
-                Err(e) => {
-                    println!("{}", format!("Failed to read node-id file: {}", e).red());
-                    return SetupResult::Invalid;
-                }
+        
+        match fs::read_to_string(&node_id_path) {
+            Ok(content) => {
+                println!("\nUsing existing node ID: {}", content.trim());
+                return SetupResult::Connected(content.trim().to_string());
             }
-        } else {
-            println!("Ignoring existing user account...");
+            Err(e) => {
+                println!("{}", format!("Failed to read node-id file: {}", e).red());
+                return SetupResult::Invalid;
+            }
         }
     }
 
